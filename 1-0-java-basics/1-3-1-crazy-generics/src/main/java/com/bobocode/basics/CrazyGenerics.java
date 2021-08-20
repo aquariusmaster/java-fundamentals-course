@@ -6,6 +6,7 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.StreamSupport;
 
 /**
  * {@link CrazyGenerics} is an exercise class. It consists of classes, interfaces and methods that should be updated
@@ -38,7 +39,6 @@ public class CrazyGenerics {
      */
     @Data
     public static class Limited<T extends Number> {
-        // todo: refactor class to introduce type param bounded by number and make fields generic numbers
         private final T actual;
         private final T min;
         private final T max;
@@ -51,7 +51,7 @@ public class CrazyGenerics {
      * @param <T> – source object type
      * @param <R> - converted result type
      */
-    public interface Converter<T, R> { // todo: introduce type parameters
+    public interface Converter<T,R> {
         R convert(T source);
     }
 
@@ -62,7 +62,7 @@ public class CrazyGenerics {
      *
      * @param <T> – value type
      */
-    public static class MaxHolder<T extends Comparable<T>> { // todo: refactor class to make it generic
+    public static class MaxHolder<T extends Comparable<T>> {
         private T max;
 
         public MaxHolder(T max) {
@@ -75,7 +75,9 @@ public class CrazyGenerics {
          * @param val a new value
          */
         public void put(T val) {
-            if (val.compareTo(max) > 0) max = val;
+            if (val.compareTo(max) > 0) {
+                this.max = val;
+            }
         }
 
         public T getMax() {
@@ -89,7 +91,7 @@ public class CrazyGenerics {
      *
      * @param <T> – the type of objects that can be processed
      */
-    interface StrictProcessor<T extends Serializable & Comparable<T>> { // todo: make it generic
+    interface StrictProcessor<T extends Serializable & Comparable<T>> {
         void process(T obj);
     }
 
@@ -100,7 +102,7 @@ public class CrazyGenerics {
      * @param <T> – a type of the entity that should be a subclass of {@link BaseEntity}
      * @param <C> – a type of any collection
      */
-    interface CollectionRepository<T extends BaseEntity, C extends Collection<T>> { // todo: update interface according to the javadoc
+    interface CollectionRepository<T extends BaseEntity, C extends Collection<T>> {
         void save(T entity);
 
         C getEntityCollection();
@@ -112,7 +114,7 @@ public class CrazyGenerics {
      *
      * @param <T> – a type of the entity that should be a subclass of {@link BaseEntity}
      */
-    interface ListRepository<T extends BaseEntity> extends CollectionRepository<T, List<T>> { // todo: update interface according to the javadoc
+    interface ListRepository<T extends BaseEntity> extends CollectionRepository<T, List<T>> {
     }
 
     /**
@@ -125,8 +127,7 @@ public class CrazyGenerics {
      *
      * @param <E> a type of collection elements
      */
-    interface ComparableCollection<E extends Collection<?>> extends Collection<E>, Comparable<Collection<?>> { // todo: refactor it to make generic and provide a default impl of compareTo
-
+    interface ComparableCollection<E> extends Collection<E>, Comparable<Collection<?>> {
         @Override
         default int compareTo(Collection<?> o) {
             return Integer.compare(size(), o.size());
@@ -145,7 +146,6 @@ public class CrazyGenerics {
          * @param list
          */
         public static void print(List<?> list) {
-            // todo: refactor it so the list of any type can be printed, not only integers
             list.forEach(element -> System.out.println(" – " + element));
         }
 
@@ -184,8 +184,8 @@ public class CrazyGenerics {
          * @param <T>          entity type
          * @return true if entities list contains target entity more than once
          */
-        public static <T extends BaseEntity> boolean hasDuplicates(Collection<T> entities, T targetEntity) {
-            return entities.stream().filter(e -> e.getUuid() == targetEntity.getUuid()).count() > 1;
+        public static <T extends BaseEntity> boolean hasDuplicates(List<T> entities, T targetEntity) {
+            return entities.stream().filter(e -> targetEntity.getUuid().equals(e.getUuid())).limit(2).count() > 1;
         }
 
         /**
@@ -198,14 +198,7 @@ public class CrazyGenerics {
          * @return optional max value
          */
         public static <T> Optional<T> findMax(Iterable<T> elements, Comparator<? super T> comparator) {
-            Iterator<T> iterator = elements.iterator();
-            if (!iterator.hasNext()) return Optional.empty();
-            T max = iterator.next();
-            while (iterator.hasNext()) {
-                T current = iterator.next();
-                if (comparator.compare(current, max) > 0) max = current;
-            }
-            return Optional.of(max);
+            return StreamSupport.stream(elements.spliterator(), true).max(comparator);
         }
 
         /**
@@ -220,8 +213,8 @@ public class CrazyGenerics {
          * @param <T>      entity type
          * @return an entity from the given collection that has the max createdOn value
          */
-        public static <T extends BaseEntity> T findMostRecentlyCreatedEntity(Collection<T> entities) {
-            return findMax(entities, CREATED_ON_COMPARATOR).orElseThrow(NoSuchElementException::new);
+        public static <T extends BaseEntity>  T findMostRecentlyCreatedEntity(Collection<T> entities) {
+            return findMax(entities, CREATED_ON_COMPARATOR).orElseThrow();
         }
 
         /**

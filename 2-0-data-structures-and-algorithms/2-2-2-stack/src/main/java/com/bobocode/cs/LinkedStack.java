@@ -1,7 +1,10 @@
 package com.bobocode.cs;
 
 import com.bobocode.cs.exception.EmptyStackException;
-import com.bobocode.util.ExerciseNotCompletedException;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Objects;
 
@@ -16,15 +19,6 @@ public class LinkedStack<T> implements Stack<T> {
     private Node<T> head;
     private int size;
 
-    private static class Node<T> {
-        private T value;
-        private Node<T> next;
-
-        public Node(T value) {
-            this.value = value;
-        }
-    }
-
     /**
      * This method creates a stack of provided elements
      *
@@ -34,8 +28,8 @@ public class LinkedStack<T> implements Stack<T> {
      */
     public static <T> LinkedStack<T> of(T... elements) {
         LinkedStack<T> stack = new LinkedStack<>();
-        for (T el : elements) {
-            stack.push(el);
+        for (T element : elements) {
+            stack.push(element);
         }
         return stack;
     }
@@ -49,11 +43,11 @@ public class LinkedStack<T> implements Stack<T> {
     @Override
     public void push(T element) {
         Objects.requireNonNull(element);
-        Node<T> newNode = new Node<>(element);
-        if (head != null) {
-            newNode.next = head;
+        if (head == null) {
+            head = new Node<>(element, null);
+        } else {
+            head = new Node<>(element, head);
         }
-        head = newNode;
         size++;
     }
 
@@ -66,10 +60,13 @@ public class LinkedStack<T> implements Stack<T> {
      */
     @Override
     public T pop() {
-        if (head == null) throw new EmptyStackException();
-        T value = head.value;
-        head = head.next;
-        size--;
+        if (isEmpty()) throw new EmptyStackException();
+        T value = head.getValue();
+        if (size-- == 1) {
+            head = null;
+        } else {
+            head = head.getNext();
+        }
         return value;
     }
 
@@ -90,7 +87,16 @@ public class LinkedStack<T> implements Stack<T> {
      */
     @Override
     public boolean isEmpty() {
-        return head == null;
+        return size == 0;
+    }
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Getter
+    @Setter
+    private static class Node<T> {
+        private T value;
+        private Node<T> next;
     }
 
 }
