@@ -16,8 +16,8 @@ public class Merge {
         int[] arr = {1, 5, 6, 9, 10, 12};
         mergeSort(arr, 0, arr.length - 1);
         System.out.println(Arrays.toString(arr));
-        //Merge Sort consumes time of O(N*log(n)), less than Insertion Sort
-        //Merge Sort consumes space of O(log(n)), more than Insertion Sort
+        //Merge Sort consumes time of O(N*log(n)), less than the Insertion Sort
+        //Merge Sort consumes space of O(N), more than the Insertion Sort
         //The same number of operations will be executed no matter if the array is partially sorted or not.
     }
 
