@@ -1,9 +1,7 @@
 package com.bobocode.cs;
 
 
-
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 /**
  * {@link LinkedList} is a list implementation that is based on singly linked generic nodes. A node is implemented as
@@ -13,18 +11,22 @@ import java.util.Objects;
  */
 public class LinkedList<T> implements List<T> {
 
-    private static class Node<T> {
+    private Node<T> head;
+    private Node<T> tail;
+    private int size;
+
+    private static final class Node<T> {
         private T value;
         private Node<T> next;
 
         public Node(T value) {
             this.value = value;
         }
-    }
 
-    private Node<T> head;
-    private Node<T> tail;
-    private int size;
+        static <T> Node<T> valueOf(T element) {
+            return new Node<>(element);
+        }
+    }
 
     /**
      * This method creates a list of provided elements
@@ -35,8 +37,8 @@ public class LinkedList<T> implements List<T> {
      */
     public static <T> LinkedList<T> of(T... elements) {
         LinkedList<T> list = new LinkedList<>();
-        for (T el : elements) {
-            list.add(el);
+        for (T element : elements) {
+            list.add(element);
         }
         return list;
     }
@@ -48,8 +50,7 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public void add(T element) {
-        Objects.requireNonNull(element);
-        Node<T> newNode = new Node<>(element);
+        Node<T> newNode = Node.valueOf(element);
         if (head == null) {
             head = tail = newNode;
         } else {
@@ -68,21 +69,21 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public void add(int index, T element) {
-        Objects.requireNonNull(element);
-        if (index == 0 && head == null) {
-            add(element);
-            return;
-        }
-        Node<T> newNode = new Node<>(element);
+        if (index > size || index < 0) throw new IndexOutOfBoundsException();
         if (index == 0) {
+            Node<T> newNode = Node.valueOf(element);
             newNode.next = head;
             head = newNode;
-        } else {
-            Node<T> nodeBefore = skip(head, index - 1);
-            Node<T> next = nodeBefore.next;
-            nodeBefore.next = newNode;
-            newNode.next = next;
+            size++;
+            return;
         }
+        Node<T> beforeTarget = head;
+        while (--index > 0) {
+            beforeTarget = beforeTarget.next;
+        }
+        Node<T> temp = beforeTarget.next;
+        beforeTarget.next = Node.valueOf(element);
+        beforeTarget.next.next = temp;
         size++;
     }
 
@@ -95,10 +96,12 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public void set(int index, T element) {
-        Objects.requireNonNull(element);
-        Objects.checkIndex(index, size);
-        Node<T> node = skip(head, index);
-        node.value = element;
+        if (index >= size || index <= 0) throw new IndexOutOfBoundsException();
+        Node<T> target = head;
+        while (index-- > 0) {
+            target = target.next;
+        }
+        target.value = element;
     }
 
     /**
@@ -110,7 +113,12 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public T get(int index) {
-        return skip(head, index).value;
+        if (index >= size || index < 0) throw new IndexOutOfBoundsException();
+        Node<T> target = head;
+        while (index-- > 0) {
+            target = target.next;
+        }
+        return target.value;
     }
 
     /**
@@ -146,15 +154,19 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public T remove(int index) {
-        T value;
+        if (index > size || index < 0) throw new IndexOutOfBoundsException();
         if (index == 0) {
-            value = head.value;
+            T value = head.value;
             head = head.next;
-        } else {
-            Node<T> node = skip(head, index - 1);
-            value = node.next.value;
-            node.next = node.next.next;
+            size--;
+            return value;
         }
+        Node<T> beforeTarget = head;
+        while (--index > 0) {
+            beforeTarget = beforeTarget.next;
+        }
+        T value = beforeTarget.next.value;
+        beforeTarget.next = beforeTarget.next.next;
         size--;
         return value;
     }
@@ -167,11 +179,12 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public boolean contains(T element) {
-        Objects.requireNonNull(element);
         Node<T> node = head;
-        while(node != null) {
-            if (node.value.equals(element)) return true;
-            node = node = node.next;
+        while (node != null) {
+            if (element.equals(node.value)) {
+                return true;
+            }
+            node = node.next;
         }
         return false;
     }
@@ -183,7 +196,7 @@ public class LinkedList<T> implements List<T> {
      */
     @Override
     public boolean isEmpty() {
-        return head == null;
+        return size == 0;
     }
 
     /**
@@ -203,14 +216,5 @@ public class LinkedList<T> implements List<T> {
     public void clear() {
         head = tail = null;
         size = 0;
-    }
-
-    private Node<T> skip(Node<T> node, int numToSkip) {
-        Objects.checkIndex(numToSkip, size);
-        Node<T> temp = node;
-        while(numToSkip-- > 0) {
-            temp = temp.next;
-        }
-        return temp;
     }
 }

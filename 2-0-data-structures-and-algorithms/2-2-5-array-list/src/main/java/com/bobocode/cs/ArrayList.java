@@ -2,13 +2,13 @@ package com.bobocode.cs;
 
 import java.util.Arrays;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 
 /**
  * {@link ArrayList} is an implementation of {@link List} interface. This resizable data structure
  * based on an array and is simplified version of {@link java.util.ArrayList}.
  */
 public class ArrayList<T> implements List<T> {
+
     private Object[] container;
     private int size;
 
@@ -19,7 +19,7 @@ public class ArrayList<T> implements List<T> {
      * @throws IllegalArgumentException – if the specified initial capacity is negative or 0.
      */
     public ArrayList(int initCapacity) {
-        if (initCapacity <= 0) throw new IllegalArgumentException();
+        if (initCapacity < 0) throw new IllegalArgumentException();
         container = new Object[initCapacity];
     }
 
@@ -39,8 +39,8 @@ public class ArrayList<T> implements List<T> {
      */
     public static <T> List<T> of(T... elements) {
         ArrayList<T> list = new ArrayList<>(elements.length);
-        for (T el : elements) {
-            list.add(el);
+        for (T element : elements) {
+            list.add(element);
         }
         return list;
     }
@@ -52,19 +52,10 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public void add(T element) {
-        Objects.requireNonNull(element);
-        checkSize();
-        container[size++] = element;
-    }
-
-    private void checkSize() {
         if (size + 1 >= container.length) {
             doubleSize();
         }
-    }
-
-    private void doubleSize() {
-        container = Arrays.copyOf(container, container.length * 2);
+        container[size++] = element;
     }
 
     /**
@@ -75,13 +66,14 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public void add(int index, T element) {
-        Objects.requireNonNull(element);
-        Objects.checkIndex(index, size + 1);
-        if (index == container.length) {
+        if (index < 0) throw new IndexOutOfBoundsException();
+        if (index == size - 1) {
             add(element);
             return;
         }
-        checkSize();
+        if (size + 1 >= container.length) {
+            doubleSize();
+        }
         System.arraycopy(container, index, container, index + 1, size - index);
         container[index] = element;
         size++;
@@ -94,12 +86,11 @@ public class ArrayList<T> implements List<T> {
      * @param index index of element
      * @return en element
      */
-    @SuppressWarnings("unchecked")
     @Override
+    @SuppressWarnings("unchecked")
     public T get(int index) {
-        Objects.checkIndex(index, size);
-        return  (T) container[index];
-
+        if (index >= container.length || size == 0) throw new IndexOutOfBoundsException();
+        return (T) container[index];
     }
 
     /**
@@ -110,7 +101,7 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public T getFirst() {
-        if (size == 0) throw new NoSuchElementException();
+        if (isEmpty()) throw new NoSuchElementException();
         return get(0);
     }
 
@@ -122,8 +113,8 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public T getLast() {
-        if (size == 0) throw new NoSuchElementException();
-        return get(size - 1);
+        if (isEmpty()) throw new NoSuchElementException();
+        return get(container.length - 1);
     }
 
     /**
@@ -135,7 +126,7 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public void set(int index, T element) {
-        Objects.checkIndex(index, size);
+        if (index >= container.length || size == 0) throw new IndexOutOfBoundsException();
         container[index] = element;
     }
 
@@ -147,10 +138,13 @@ public class ArrayList<T> implements List<T> {
      * @return deleted element
      */
     @Override
+    @SuppressWarnings("unchecked")
     public T remove(int index) {
-        T value = get(index);
-        System.arraycopy(container, index + 1, container, index, size - index - 1);
-        container[--size] = null;
+        if (index >= size || size == 0) throw new IndexOutOfBoundsException();
+        T value = (T) container[index];
+        System.arraycopy(container, index + 1, container, index, container.length - index - 1);
+        container[container.length - 1] = null;
+        size--;
         return value;
     }
 
@@ -160,11 +154,11 @@ public class ArrayList<T> implements List<T> {
      * @param element is element
      * @return If element exists method returns true, otherwise it returns false
      */
-    @SuppressWarnings("unchecked")
     @Override
     public boolean contains(T element) {
-        for (Object el : container) {
-            if (element.equals((T) el)) return true;
+        if (isEmpty()) return false;
+        for (Object obj : container) {
+            if (obj.equals(element)) return true;
         }
         return false;
     }
@@ -176,7 +170,7 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public boolean isEmpty() {
-        return size <= 0;
+        return size == 0;
     }
 
     /**
@@ -192,7 +186,11 @@ public class ArrayList<T> implements List<T> {
      */
     @Override
     public void clear() {
-        Arrays.fill(container, null);
+        container = new Object[container.length];
         size = 0;
+    }
+
+    private void doubleSize() {
+        container = Arrays.copyOf(this.container, this.container.length * 2);
     }
 }

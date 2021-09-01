@@ -1,80 +1,89 @@
 package com.bobocode.cs;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 
 public class RecursiveBinarySearchTree<T extends Comparable<T>> implements BinarySearchTree<T> {
 
+    private int size;
+    private int depth;
+    private Node<T> root;
+
+    @Setter
+    @Getter
     private static class Node<T> {
-        private T element;
+        private T value;
         private Node<T> left;
         private Node<T> right;
 
-        public Node(T element) {
-            this.element = element;
+        public Node(T value) {
+            this.value = value;
         }
     }
 
-    private Node<T> root;
-    private int size;
-
     public static <T extends Comparable<T>> RecursiveBinarySearchTree<T> of(T... elements) {
         RecursiveBinarySearchTree<T> tree = new RecursiveBinarySearchTree<>();
-        for (T el : elements) {
-            tree.insert(el);
+        for (T element : elements) {
+            tree.insert(element);
         }
         return tree;
     }
 
     @Override
     public boolean insert(T element) {
+        Objects.requireNonNull(element);
         if (root == null) {
             root = new Node<>(element);
             size++;
             return true;
         }
-        if (insertToTree(root, element)) {
-            size++;
-            return true;
-        }
-        return false;
+        int currentDepth = insert(root, element, 0);
+        depth = Math.max(depth, currentDepth);
+        return currentDepth > 0;
     }
 
-    private boolean insertToTree(Node<T> node, T element) {
-        if (node.element.compareTo(element) > 0) {
-            if (node.left == null) {
-                node.left = new Node<>(element);
-                return true;
-            } else {
-                return insertToTree(node.left, element);
+    private int insert(Node<T> current, T element, int currentDepth) {
+        int compareResult = current.value.compareTo(element);
+        if (compareResult == 0) {
+            return 0;
+        } else if (compareResult > 0) {
+            currentDepth++;
+            if (current.left == null) {
+                current.left = new Node<>(element);
+                size++;
+                return currentDepth;
             }
-        }
-        if (node.element.compareTo(element) < 0) {
-            if (node.right == null) {
-                node.right = new Node<>(element);
-                return true;
-            } else {
-                return insertToTree(node.right, element);
+            return insert(current.left, element, currentDepth);
+        } else {
+            currentDepth++;
+            if (current.right == null) {
+                current.right = new Node<>(element);
+                size++;
+                return currentDepth;
             }
+            return insert(current.right, element, currentDepth);
         }
-        return false;
     }
 
     @Override
     public boolean contains(T element) {
         Objects.requireNonNull(element);
-        return getChildNodeRecursively(root, element) != null;
-    }
-
-    private Node<T> getChildNodeRecursively(Node<T> node, T element) {
-        if (node == null) return null;
-        if (node.element.compareTo(element) > 0) {
-            return getChildNodeRecursively(node.left, element);
+        if (root == null) return false;
+        Node<T> current = root;
+        while (current != null) {
+            int compareResult = current.value.compareTo(element);
+            if (compareResult == 0) {
+                return true;
+            } else if (compareResult > 0) {
+                current = current.left;
+            } else {
+                current = current.right;
+            }
         }
-        if (node.element.compareTo(element) < 0) {
-            return getChildNodeRecursively(node.right, element);
-        }
-        return node;
+        return false;
     }
 
     @Override
@@ -84,24 +93,34 @@ public class RecursiveBinarySearchTree<T extends Comparable<T>> implements Binar
 
     @Override
     public int depth() {
-        if (root == null || (root.left == null && root.right == null)) return 0;
-        return findDepth(root) - 1;
+//        return depth; //to make tests work
+        if (root == null || size == 1) return 0;
+        return calculateDepth(root);
     }
 
-    private int findDepth(Node<T> node) {
-        if (node == null) return 0;
-        return 1 + Math.max(findDepth(node.left), findDepth(node.right));
+    private int calculateDepth(Node<T> node) {
+        if (node.left == null && node.right == null) {
+            return 0;
+        } else if (node.left != null && node.right == null) {
+            return calculateDepth(node.left) + 1;
+        } else if (node.left == null) {
+            return calculateDepth(node.right) + 1;
+        } else {
+            return Math.max(calculateDepth(node.left), calculateDepth(node.right)) + 1;
+        }
     }
 
     @Override
     public void inOrderTraversal(Consumer<T> consumer) {
-        traverseRecursively(root, consumer);
+        traverse(root, consumer);
     }
 
-    private void traverseRecursively(Node<T> node, Consumer<T> consumer) {
-        if (node == null) return;
-        traverseRecursively(node.left, consumer);
-        consumer.accept(node.element);
-        traverseRecursively(node.right, consumer);
+    private void traverse(Node<T> root, Consumer<T> consumer) {
+        if (root == null) {
+            return;
+        }
+        traverse(root.left, consumer);
+        consumer.accept(root.value);
+        traverse(root.right, consumer);
     }
 }
