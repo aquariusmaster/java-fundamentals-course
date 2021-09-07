@@ -1,8 +1,6 @@
 package com.bobobode.cs;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,10 +10,12 @@ import lombok.Setter;
  *
  * @param <T> a generic type T
  */
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter @Setter
 public class Node<T> {
     private T value;
     private Node<T> next;
+
+    public Node(T value) {
+        this.value = value;
+    }
 }

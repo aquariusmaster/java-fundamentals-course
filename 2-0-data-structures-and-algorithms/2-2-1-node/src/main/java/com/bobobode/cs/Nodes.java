@@ -1,5 +1,7 @@
 package com.bobobode.cs;
 
+import com.bobocode.util.ExerciseNotCompletedException;
+
 /**
  * A class that consists of static methods only and provides util methods for {@link Node}.
  */
@@ -15,7 +17,7 @@ public class Nodes {
      * @return a new instance of {@link Node}
      */
     public static <T> Node<T> create(T element) {
-        return new Node<>(element, null);
+        return new Node<>(element);
     }
 
     /**
@@ -39,7 +41,9 @@ public class Nodes {
      * @return a reference to a first node created based on firstElement
      */
     public static <T> Node<T> pairOf(T firstElement, T secondElement) {
-        return new Node<T>(firstElement, new Node<T>(secondElement, null));
+        Node<T> head = create(firstElement);
+        head.setNext(create(secondElement));
+        return head;
     }
 
     /**
@@ -53,8 +57,10 @@ public class Nodes {
      * @return a reference to the first node
      */
     public static <T> Node<T> closedPairOf(T firstElement, T secondElement) {
-        Node<T> firstNode = pairOf(firstElement, secondElement);
-        firstNode.getNext().setNext(firstNode);
+        Node<T> firstNode = create(firstElement);
+        Node<T> secondNode = create(secondElement);
+        link(firstNode, secondNode);
+        link(secondNode, firstNode);
         return firstNode;
     }
 
@@ -66,13 +72,14 @@ public class Nodes {
      * @param <T>      generic type T
      * @return a reference to the first element of the chain
      */
+    @SuppressWarnings("unchecked")
     public static <T> Node<T> chainOf(T... elements) {
         Node<T> head = create(elements[0]);
-        Node<T> cur = head;
+        Node<T> prev = head;
         for (int i = 1; i < elements.length; i++) {
-            Node<T> newNode = create(elements[i]);
-            cur.setNext(newNode);
-            cur = newNode;
+            Node<T> node = create(elements[i]);
+            prev.setNext(node);
+            prev = node;
         }
         return head;
     }
@@ -86,15 +93,16 @@ public class Nodes {
      * @param <T>      generic type T
      * @return a reference to the first element of the chain
      */
+    @SuppressWarnings("unchecked")
     public static <T> Node<T> circleOf(T... elements) {
         Node<T> head = create(elements[0]);
-        Node<T> cur = head;
+        Node<T> prev = head;
         for (int i = 1; i < elements.length; i++) {
-            Node<T> newNode = create(elements[i]);
-            cur.setNext(newNode);
-            cur = newNode;
+            Node<T> node = create(elements[i]);
+            prev.setNext(node);
+            prev = node;
         }
-        cur.setNext(head);
+        prev.setNext(head);
         return head;
     }
 }
