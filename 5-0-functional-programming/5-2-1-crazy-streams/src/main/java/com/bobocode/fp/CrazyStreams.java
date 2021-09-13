@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Month;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -208,7 +207,7 @@ public class CrazyStreams {
                 .map(Account::getFirstName)
                 .flatMapToInt(String::chars)
                 .mapToObj(c -> (char) c)
-                .collect(groupingBy(Function.identity(), counting()));
+                .collect(groupingBy(identity(), counting()));
     }
 
     /**
@@ -219,10 +218,11 @@ public class CrazyStreams {
      */
     public Map<Character, Long> getCharacterFrequencyIgnoreCaseInFirstAndLastNames() {
         return accounts.stream()
-                .map(account -> account.getLastName().toLowerCase() + account.getFirstName().toLowerCase())
+                .flatMap(account -> Stream.of(account.getFirstName(), account.getLastName()))
+                .map(String::toLowerCase)
                 .flatMapToInt(String::chars)
                 .mapToObj(c -> (char) c)
-                .collect(groupingBy(Function.identity(), counting()));
+                .collect(groupingBy(identity(), counting()));
     }
 
 }
