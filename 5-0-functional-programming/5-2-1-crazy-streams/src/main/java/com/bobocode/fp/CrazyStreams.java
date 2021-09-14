@@ -222,7 +222,8 @@ public class CrazyStreams {
                 .map(Account::getFirstName)
                 .flatMapToInt(String::chars)
                 .mapToObj(c -> (char) c)
-                .collect(groupingBy(identity(), counting()));
+                .collect(toMap(identity(), v -> 1L, (prev, curr) -> ++prev));
+//                .collect(groupingBy(identity(), counting()));
     }
 
     /**
