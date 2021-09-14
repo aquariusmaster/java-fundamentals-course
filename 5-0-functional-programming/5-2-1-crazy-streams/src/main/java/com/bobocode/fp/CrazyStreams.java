@@ -208,6 +208,10 @@ public class CrazyStreams {
         return accounts.stream()
                 .collect(
                         toMap(account -> account.getCreationDate().getMonth(), Account::getBalance, BigDecimal::add)
+//                        groupingBy(
+//                                account -> account.getCreationDate().getMonth(),
+//                                mapping(Account::getBalance, reducing(BigDecimal.ZERO, BigDecimal::add))
+//                        )
                 );
     }
 
