@@ -9,9 +9,11 @@ import lombok.AllArgsConstructor;
 import java.math.BigDecimal;
 import java.time.Month;
 import java.util.*;
+import java.util.function.BinaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.bobocode.model.Sex.MALE;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.*;
 
@@ -35,6 +37,20 @@ public class CrazyStreams {
         return accounts.stream().max(Comparator.comparing(Account::getBalance));
     }
 
+    public Map<Sex, Account> findRichestPerson2() {
+        return accounts.stream()
+                .collect(
+                        toMap(Account::getSex, identity(), BinaryOperator.maxBy(Comparator.comparing(Account::getBalance)))
+                );
+    }
+
+    public Map<Month, Account> findRichestPerson3() {
+        return accounts.stream()
+                .collect(
+                        toMap(account -> account.getBirthday().getMonth(), identity(), BinaryOperator.maxBy(Comparator.comparing(Account::getBalance)))
+                );
+    }
+
     /**
      * Returns a {@link List} of {@link Account} that have a birthday month equal to provided.
      *
@@ -54,7 +70,7 @@ public class CrazyStreams {
      * @return a map where key is true or false, and value is list of male, and female accounts
      */
     public Map<Boolean, List<Account>> partitionMaleAccounts() {
-        return accounts.stream().collect(groupingBy(a -> a.getSex() == Sex.MALE));
+        return accounts.stream().collect(partitioningBy(a -> a.getSex() == MALE));
     }
 
     /**
@@ -112,7 +128,9 @@ public class CrazyStreams {
      * @return true if there is an account that has an email with provided domain
      */
     public boolean containsAccountWithEmailDomain(String emailDomain) {
-        return accounts.stream().anyMatch(account -> account.getEmail().endsWith(emailDomain));
+        return accounts.stream()
+                .map(Account::getEmail)
+                .anyMatch(email -> email.endsWith(emailDomain));
     }
 
     /**
@@ -189,10 +207,7 @@ public class CrazyStreams {
     public Map<Month, BigDecimal> groupTotalBalanceByCreationMonth() {
         return accounts.stream()
                 .collect(
-                        groupingBy(
-                                account -> account.getCreationDate().getMonth(),
-                                mapping(Account::getBalance, reducing(BigDecimal.ZERO, BigDecimal::add))
-                        )
+                        toMap(account -> account.getCreationDate().getMonth(), Account::getBalance, BigDecimal::add)
                 );
     }
 
