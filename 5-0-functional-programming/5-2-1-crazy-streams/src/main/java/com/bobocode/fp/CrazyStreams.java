@@ -8,17 +8,30 @@ import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Month;
-import java.util.*;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BinaryOperator;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.bobocode.model.Sex.MALE;
+import static java.util.Comparator.comparing;
+import static java.util.function.BinaryOperator.maxBy;
 import static java.util.function.Function.identity;
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.partitioningBy;
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * {@link CrazyStreams} is an exercise class. Each method represent some operation with a collection of accounts that
@@ -37,20 +50,24 @@ public class CrazyStreams {
      * @return account with max balance wrapped with optional
      */
     public Optional<Account> findRichestPerson() {
-        return accounts.stream().max(Comparator.comparing(Account::getBalance));
+        return accounts.stream().max(comparing(Account::getBalance));
     }
 
     public Map<Sex, Account> findRichestPerson2() {
         return accounts.stream()
                 .collect(
-                        toMap(Account::getSex, identity(), BinaryOperator.maxBy(Comparator.comparing(Account::getBalance)))
+                        toMap(Account::getSex, identity(), maxBy(comparing(Account::getBalance)))
                 );
     }
 
     public Map<Month, Account> findRichestPerson3() {
         return accounts.stream()
                 .collect(
-                        toMap(account -> account.getBirthday().getMonth(), identity(), BinaryOperator.maxBy(Comparator.comparing(Account::getBalance)))
+                        toMap(
+                                account -> account.getBirthday().getMonth(),
+                                identity(),
+                                maxBy(comparing(Account::getBalance))
+                        )
                 );
     }
 
@@ -120,7 +137,7 @@ public class CrazyStreams {
      */
     public List<Account> sortByFirstAndLastNames() {
         return accounts.stream()
-                .sorted(Comparator.comparing(Account::getFirstName).thenComparing(Account::getLastName))
+                .sorted(comparing(Account::getFirstName).thenComparing(Account::getLastName))
                 .collect(Collectors.toList());
     }
 
@@ -247,19 +264,25 @@ public class CrazyStreams {
                 .map(String::toLowerCase)
                 .flatMapToInt(String::chars)
                 .mapToObj(c -> (char) c)
-                .collect(groupingBy(
+                .collect(
+                        groupingBy(
                                 identity(),
-//                                counting()
-                                collectingAndThen( // Just for fun: playing with finisher
-                                        Collector.of(
-                                                AtomicInteger::new,
-                                                (accumulator, character) -> accumulator.incrementAndGet(),
-                                                (left, right) -> left, //non-parallel stream since there is nothing to combine
-                                                AtomicInteger::get
-                                        ),
-                                        Long::valueOf // convert int to long
+                                Collector.of(
+                                        AtomicInteger::new, // Just For Fun play with Collector
+                                        (accumulator, character) -> accumulator.incrementAndGet(),
+                                        (left, right) -> left, //non-parallel stream since there is nothing to combine
+                                        a -> Long.valueOf(a.get()) // finishing with converting int to Long
                                 )
                         )
+//                                counting() // the right way to do it
+
+//                                Collector.of( // another way to have counting()
+//                                        AtomicLong::new,
+//                                        (accumulator, character) -> accumulator.incrementAndGet(),
+//                                        (left, right) -> left, //non-parallel stream since there is nothing to combine
+//                                        AtomicLong::get
+//                                )
+
                 );
     }
 
