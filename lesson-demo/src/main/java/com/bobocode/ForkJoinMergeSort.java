@@ -20,10 +20,10 @@ public class ForkJoinMergeSort {
         LongSummaryStatistics actionStat =
                 Stream.generate(arraySupplier)
                         .limit(10)
-                        .mapToLong(arr -> {
+                        .map(MergeSortAction::new)
+                        .mapToLong(task -> {
                             long start = System.currentTimeMillis();
-                            MergeSortAction main = new MergeSortAction(arr);
-                            forkJoinPool.invoke(main);
+                            forkJoinPool.invoke(task);
                             return System.currentTimeMillis() - start;
                         })
                         .peek(duration -> System.out.println(duration + "ms"))
@@ -80,7 +80,7 @@ public class ForkJoinMergeSort {
         @Override
         protected Long compute() {
             var start = System.currentTimeMillis();
-            if (arr.length < 2) return System.currentTimeMillis() - start;
+            if (arr.length < 2) return 0L;
             var mid = arr.length / 2;
             var left = Arrays.copyOfRange(arr, 0, mid);
             var right = Arrays.copyOfRange(arr, mid, arr.length);
