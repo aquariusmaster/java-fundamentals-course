@@ -17,9 +17,9 @@ public class MergeSortTask extends RecursiveTask<Long> {
         var left = Arrays.copyOfRange(arr, 0, mid);
         var right = Arrays.copyOfRange(arr, mid, arr.length);
 
-        var leftAction = new MergeSortAction(left);
+        var leftAction = new MergeSortTask(left);
         leftAction.fork();
-        var rightAction = new MergeSortAction(right);
+        var rightAction = new MergeSortTask(right);
         rightAction.compute();
         leftAction.join();
         merge(arr, left, right);
