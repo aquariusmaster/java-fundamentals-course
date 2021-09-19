@@ -7,20 +7,27 @@ import java.util.concurrent.RecursiveAction;
 
 @RequiredArgsConstructor
 public class MergeSortAction extends RecursiveAction {
+    private final static int THRESHOLD = 10_000;
+
     private final int[] arr;
 
     @Override
     protected void compute() {
         if (arr.length < 2) return;
-        int n = arr.length / 2;
-        int[] left = Arrays.copyOfRange(arr, 0, n);
-        int[] right = Arrays.copyOfRange(arr, n, arr.length);
+        var n = arr.length / 2;
+        var left = Arrays.copyOfRange(arr, 0, n);
+        var right = Arrays.copyOfRange(arr, n, arr.length);
+        var leftAction = new MergeSortAction(left);
+        var rightAction = new MergeSortAction(right);
 
-        MergeSortAction leftAction = new MergeSortAction(left);
-        leftAction.fork();
-        MergeSortAction rightAction = new MergeSortAction(right);
-        rightAction.compute();
-        leftAction.join();
+        if (arr.length > THRESHOLD) {
+            leftAction.fork();
+            rightAction.compute();
+            leftAction.join();
+        } else {
+            leftAction.compute();
+            rightAction.compute();
+        }
         merge(arr, left, right);
     }
 

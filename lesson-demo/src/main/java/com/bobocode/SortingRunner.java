@@ -11,6 +11,7 @@ public class SortingRunner {
     public static void main(String[] args) {
         System.out.println("CPU number: " + Runtime.getRuntime().availableProcessors());
         Supplier<int[]> arraySupplier = () -> ThreadLocalRandom.current().ints(20_000_000).toArray();
+
         System.out.println("Regular merge sort by MergeSort:");
         var stat = Stream.generate(arraySupplier)
                 .limit(10)
@@ -21,10 +22,9 @@ public class SortingRunner {
                 })
                 .peek(duration -> System.out.println(duration + "ms"))
                 .summaryStatistics();
-
         System.out.println(stat);
 
-        System.out.println("Concurrent merge sort by MergeSortAction:");
+        System.out.println("Concurrent merge sort by MergeSortAction with threshold 10000:");
         ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
         var actionStat = Stream.generate(arraySupplier)
                 .limit(10)
@@ -36,9 +36,9 @@ public class SortingRunner {
                 })
                 .peek(duration -> System.out.println(duration + "ms"))
                 .summaryStatistics();
-
         System.out.println(actionStat);
-        System.out.println("Concurrent merge sort by MergeSortTask:");
+
+        System.out.println("Concurrent merge sort by MergeSortTask with threshold 10000:");
         var taskStat = Stream.generate(arraySupplier)
                 .limit(10)
                 .map(MergeSortTask::new)
@@ -46,6 +46,5 @@ public class SortingRunner {
                 .peek(duration -> System.out.println(duration + "ms"))
                 .summaryStatistics();
         System.out.println(taskStat);
-
     }
 }

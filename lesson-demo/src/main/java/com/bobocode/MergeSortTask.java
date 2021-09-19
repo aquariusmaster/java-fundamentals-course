@@ -7,6 +7,8 @@ import java.util.concurrent.RecursiveTask;
 
 @RequiredArgsConstructor
 public class MergeSortTask extends RecursiveTask<Long> {
+    private final static int THRESHOLD = 10_000;
+
     private final int[] arr;
 
     @Override
@@ -17,11 +19,16 @@ public class MergeSortTask extends RecursiveTask<Long> {
         var left = Arrays.copyOfRange(arr, 0, mid);
         var right = Arrays.copyOfRange(arr, mid, arr.length);
 
-        var leftAction = new MergeSortTask(left);
-        leftAction.fork();
-        var rightAction = new MergeSortTask(right);
-        rightAction.compute();
-        leftAction.join();
+        var leftTask = new MergeSortTask(left);
+        var rightTask = new MergeSortTask(right);
+        if (arr.length > THRESHOLD) {
+            leftTask.fork();
+            rightTask.compute();
+            leftTask.join();
+        } else {
+            leftTask.compute();
+            rightTask.compute();
+        }
         merge(arr, left, right);
         return System.currentTimeMillis() - start;
     }
