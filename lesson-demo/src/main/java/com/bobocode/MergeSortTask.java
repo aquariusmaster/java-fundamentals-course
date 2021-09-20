@@ -7,13 +7,13 @@ import java.util.concurrent.RecursiveTask;
 
 @RequiredArgsConstructor
 public class MergeSortTask extends RecursiveTask<Long> {
-    private final static int THRESHOLD = 10_000;
+    private final static int THRESHOLD = 20_000;
 
     private final int[] arr;
 
     @Override
     protected Long compute() {
-        var start = System.currentTimeMillis();
+        var start = System.nanoTime();
         if (arr.length < 2) return 0L;
         var mid = arr.length / 2;
         var left = Arrays.copyOfRange(arr, 0, mid);
@@ -30,7 +30,7 @@ public class MergeSortTask extends RecursiveTask<Long> {
             rightTask.compute();
         }
         merge(arr, left, right);
-        return System.currentTimeMillis() - start;
+        return System.nanoTime() - start;
     }
 
     private void merge(int[] arr, int[] left, int[] right) {

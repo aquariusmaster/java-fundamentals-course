@@ -2,10 +2,13 @@ package com.bobocode;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.bobocode.MergeSort.mergeSort;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public class SortingRunner {
     public static void main(String[] args) {
@@ -16,11 +19,12 @@ public class SortingRunner {
         var stat = Stream.generate(arraySupplier)
                 .limit(10)
                 .mapToLong(arr -> {
-                    long start = System.currentTimeMillis();
+                    long start = System.nanoTime();
                     mergeSort(arr);
-                    return System.currentTimeMillis() - start;
+                    return System.nanoTime() - start;
                 })
-                .peek(duration -> System.out.println(duration + "ms"))
+                .map(elapsedNanos -> MILLISECONDS.convert(elapsedNanos, NANOSECONDS))
+                .peek(elapsedTime -> System.out.println(elapsedTime + "ms"))
                 .summaryStatistics();
         System.out.println(stat);
 
@@ -30,20 +34,22 @@ public class SortingRunner {
                 .limit(10)
                 .map(MergeSortAction::new)
                 .mapToLong(task -> {
-                    long start = System.currentTimeMillis();
+                    long start = System.nanoTime();
                     forkJoinPool.invoke(task);
-                    return System.currentTimeMillis() - start;
+                    return System.nanoTime() - start;
                 })
-                .peek(duration -> System.out.println(duration + "ms"))
+                .map(elapsedNanos -> MILLISECONDS.convert(elapsedNanos, NANOSECONDS))
+                .peek(elapsedTime -> System.out.println(elapsedTime + "ms"))
                 .summaryStatistics();
         System.out.println(actionStat);
 
-        System.out.println("Concurrent merge sort by MergeSortTask with threshold 10000:");
+        System.out.println("Concurrent merge sort by MergeSortTask with threshold 20000:");
         var taskStat = Stream.generate(arraySupplier)
                 .limit(10)
                 .map(MergeSortTask::new)
                 .mapToLong(forkJoinPool::invoke)
-                .peek(duration -> System.out.println(duration + "ms"))
+                .map(elapsedNanos -> MILLISECONDS.convert(elapsedNanos, NANOSECONDS))
+                .peek(elapsedTime -> System.out.println(elapsedTime + "ms"))
                 .summaryStatistics();
         System.out.println(taskStat);
     }
