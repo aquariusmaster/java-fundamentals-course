@@ -20,9 +20,13 @@ public class HTTPGet {
     @SneakyThrows
     public static void main(String[] args) {
         var link = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=DEMO_KEY";
+        System.out.println("--------------------HttpClient---------------------------------");
         getByHttpClient(link).forEach(System.out::println);
+        System.out.println("--------------------Open URLConnection-------------------------");
         getByURLConnection(link).forEach(System.out::println);
+        System.out.println("--------------------Make curl request--------------------------");
         getByCurl(link).forEach(System.out::println);
+        System.out.println("---------------------------------------------------------------");
     }
 
     @SneakyThrows
@@ -51,8 +55,13 @@ public class HTTPGet {
 
     @SneakyThrows
     private static String getInputStreamAsString(InputStream inputStream) {
-        try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            return reader.readLine();
+        try (var in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            String line;
+            StringBuilder result = new StringBuilder();
+            while((line = in.readLine()) != null) {
+                result.append(line);
+            }
+            return result.toString();
         }
     }
 
