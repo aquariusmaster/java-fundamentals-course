@@ -3,6 +3,7 @@ package com.bobocode;
 import lombok.SneakyThrows;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
@@ -26,33 +27,32 @@ public class HTTPGet {
 
     @SneakyThrows
     public static List<String> getByHttpClient(String url) {
-        HttpClient httpClient = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder(new URI(url)).GET().build();
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var httpClient = HttpClient.newHttpClient();
+        var request = HttpRequest.newBuilder(new URI(url)).GET().build();
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         return extractImageUrls(response.body());
     }
 
     @SneakyThrows
     public static List<String> getByURLConnection(String link) {
-        URLConnection connection = new URL(link).openConnection();
-        try (var reader = new BufferedReader(
-                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-            return extractImageUrls(reader.readLine());
-        } catch (Exception e) {
-            throw e;
-        }
+        var connection = new URL(link).openConnection();
+        var body = getInputStreamAsString(connection.getInputStream());
+
+        return extractImageUrls(body);
     }
 
     @SneakyThrows
     public static List<String> getByCurl(String url) {
+        var curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + url);
+        var body = getInputStreamAsString(curlRequestProcess.getInputStream());
+        return extractImageUrls(body);
+    }
 
-        Process curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + url);
-        try (var reader = new BufferedReader(
-                new InputStreamReader(curlRequestProcess.getInputStream(), StandardCharsets.UTF_8))) {
-            return extractImageUrls(reader.readLine());
-        } catch (Exception e) {
-            throw e;
+    @SneakyThrows
+    private static String getInputStreamAsString(InputStream inputStream) {
+        try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            return reader.readLine();
         }
     }
 
