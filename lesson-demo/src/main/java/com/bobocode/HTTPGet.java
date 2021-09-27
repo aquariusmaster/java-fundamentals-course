@@ -55,16 +55,16 @@ public class HTTPGet {
     @SneakyThrows
     public static List<String> getByURLConnection(String link) {
         var connection = new URL(link).openConnection();
-        var body = getInputStreamAsString(connection.getInputStream());
+        var responseBody = getInputStreamAsString(connection.getInputStream());
 
-        return extractImageUrls(body);
+        return extractImageUrls(responseBody);
     }
 
     @SneakyThrows
     public static List<String> getByCurl(String link) {
         var curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + link);
-        var body = getInputStreamAsString(curlRequestProcess.getInputStream());
-        return extractImageUrls(body);
+        var responseBody = getInputStreamAsString(curlRequestProcess.getInputStream());
+        return extractImageUrls(responseBody);
     }
 
     @SneakyThrows
@@ -76,7 +76,6 @@ public class HTTPGet {
 
         out.println("GET " + url.getPath() + "?" + url.getQuery() + " HTTP/1.0");
         out.println("Host: " + url.getHost());
-        out.println("Accept: */*");
         out.println();
         out.flush();
 
@@ -88,8 +87,8 @@ public class HTTPGet {
     @SneakyThrows
     private static String getInputStreamAsString(InputStream inputStream) {
         try (var in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            String line;
             StringBuilder result = new StringBuilder();
+            String line;
             while ((line = in.readLine()) != null) {
                 result.append(line);
             }
@@ -97,8 +96,8 @@ public class HTTPGet {
         }
     }
 
-    private static List<String> extractImageUrls(String body) {
-        return Arrays.stream(body.split("img_src\":\""))
+    private static List<String> extractImageUrls(String responseBody) {
+        return Arrays.stream(responseBody.split("img_src\":\""))
                 .map(line -> line.substring(0, line.indexOf(",") - 1))
                 .filter(line -> line.startsWith("http"))
                 .collect(Collectors.toList());
