@@ -44,9 +44,9 @@ public class HTTPGet {
     }
 
     @SneakyThrows
-    public static List<String> getByHttpClient(String url) {
+    public static List<String> getByHttpClient(String link) {
         var httpClient = HttpClient.newHttpClient();
-        var request = HttpRequest.newBuilder(new URI(url)).GET().build();
+        var request = HttpRequest.newBuilder(new URI(link)).GET().build();
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
         return extractImageUrls(response.body());
@@ -62,7 +62,7 @@ public class HTTPGet {
 
     @SneakyThrows
     public static List<String> getByCurl(String link) {
-        var curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + link);
+        var curlRequestProcess = Runtime.getRuntime().exec("curl " + link);
         var responseBody = getInputStreamAsString(curlRequestProcess.getInputStream());
         return extractImageUrls(responseBody);
     }
