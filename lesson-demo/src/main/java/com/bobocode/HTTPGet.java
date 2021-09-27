@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -20,6 +21,7 @@ public class HTTPGet {
         var link = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=DEMO_KEY";
         getByHttpClient(link).forEach(System.out::println);
         getByURLConnection(link).forEach(System.out::println);
+        getByCurl(link).forEach(System.out::println);
     }
 
     @SneakyThrows
@@ -32,10 +34,22 @@ public class HTTPGet {
     }
 
     @SneakyThrows
-    public static List<String> getByURLConnection(String url) {
-
+    public static List<String> getByURLConnection(String link) {
+        URLConnection connection = new URL(link).openConnection();
         try (var reader = new BufferedReader(
-                new InputStreamReader(new URL(url).openConnection().getInputStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            return extractImageUrls(reader.readLine());
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @SneakyThrows
+    public static List<String> getByCurl(String url) {
+
+        Process curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + url);
+        try (var reader = new BufferedReader(
+                new InputStreamReader(curlRequestProcess.getInputStream(), StandardCharsets.UTF_8))) {
             return extractImageUrls(reader.readLine());
         } catch (Exception e) {
             throw e;
