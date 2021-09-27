@@ -2,12 +2,16 @@ package com.bobocode;
 
 import lombok.SneakyThrows;
 
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -21,11 +25,21 @@ public class HTTPGet {
     public static void main(String[] args) {
         var link = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=DEMO_KEY";
         System.out.println("--------------------HttpClient---------------------------------");
-        getByHttpClient(link).forEach(System.out::println);
+        var httpClientResponseList = getByHttpClient(link);
+        httpClientResponseList.forEach(System.out::println);
+        System.out.println("Size: " + httpClientResponseList.size());
         System.out.println("--------------------Open URLConnection-------------------------");
-        getByURLConnection(link).forEach(System.out::println);
+        var uRLConnectionResponseList = getByURLConnection(link);
+        uRLConnectionResponseList.forEach(System.out::println);
+        System.out.println("Size: " + uRLConnectionResponseList.size());
         System.out.println("--------------------Make curl request--------------------------");
-        getByCurl(link).forEach(System.out::println);
+        var curlResponseList = getByCurl(link);
+        curlResponseList.forEach(System.out::println);
+        System.out.println("Size: " + curlResponseList.size());
+        System.out.println("--------------------Socket-------------------------------------");
+        var socketResponseList = getBySocket(link);
+        socketResponseList.forEach(System.out::println);
+        System.out.println("Size: " + socketResponseList.size());
         System.out.println("---------------------------------------------------------------");
     }
 
@@ -47,9 +61,27 @@ public class HTTPGet {
     }
 
     @SneakyThrows
-    public static List<String> getByCurl(String url) {
-        var curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + url);
+    public static List<String> getByCurl(String link) {
+        var curlRequestProcess = Runtime.getRuntime().exec("curl -X GET " + link);
         var body = getInputStreamAsString(curlRequestProcess.getInputStream());
+        return extractImageUrls(body);
+    }
+
+    @SneakyThrows
+    public static List<String> getBySocket(String link) {
+        var url = new URL(link);
+        var factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+        var socket = (SSLSocket) factory.createSocket(url.getHost(), 443);
+        var out = new PrintWriter(new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())));
+
+        out.println("GET " + url.getPath() + "?" + url.getQuery() + " HTTP/1.0");
+        out.println("Host: " + url.getHost());
+        out.println("Accept: */*");
+        out.println();
+        out.flush();
+
+        var body = getInputStreamAsString(socket.getInputStream());
+        socket.close();
         return extractImageUrls(body);
     }
 
@@ -58,7 +90,7 @@ public class HTTPGet {
         try (var in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             String line;
             StringBuilder result = new StringBuilder();
-            while((line = in.readLine()) != null) {
+            while ((line = in.readLine()) != null) {
                 result.append(line);
             }
             return result.toString();
