@@ -55,7 +55,7 @@ public class HTTPGet {
     @SneakyThrows
     public static List<String> getByURLConnection(String link) {
         var connection = new URL(link).openConnection();
-        var responseBody = getInputStreamAsString(connection.getInputStream());
+        var responseBody = readToString(connection.getInputStream());
 
         return extractImageUrls(responseBody);
     }
@@ -63,7 +63,7 @@ public class HTTPGet {
     @SneakyThrows
     public static List<String> getByCurl(String link) {
         var curlRequestProcess = Runtime.getRuntime().exec("curl " + link);
-        var responseBody = getInputStreamAsString(curlRequestProcess.getInputStream());
+        var responseBody = readToString(curlRequestProcess.getInputStream());
         return extractImageUrls(responseBody);
     }
 
@@ -79,13 +79,13 @@ public class HTTPGet {
         out.println();
         out.flush();
 
-        var body = getInputStreamAsString(socket.getInputStream());
+        var body = readToString(socket.getInputStream());
         socket.close();
         return extractImageUrls(body);
     }
 
     @SneakyThrows
-    private static String getInputStreamAsString(InputStream inputStream) {
+    private static String readToString(InputStream inputStream) {
         try (var in = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             StringBuilder result = new StringBuilder();
             String line;
@@ -98,7 +98,7 @@ public class HTTPGet {
 
     private static List<String> extractImageUrls(String responseBody) {
         return Arrays.stream(responseBody.split("img_src\":\""))
-                .map(line -> line.substring(0, line.indexOf(",") - 1))
+                .map(line -> line.substring(0, line.indexOf("\",")))
                 .filter(line -> line.startsWith("http"))
                 .collect(Collectors.toList());
     }
