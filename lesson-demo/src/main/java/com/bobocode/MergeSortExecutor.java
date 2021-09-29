@@ -1,33 +1,31 @@
 package com.bobocode;
 
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
 import java.util.Arrays;
-import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.ExecutorService;
 
 @RequiredArgsConstructor
-public class MergeSortAction extends RecursiveAction {
-    private final static int THRESHOLD = 1_000_000;
+public class MergeSortExecutor {
 
     private final int[] arr;
+    private final ExecutorService executor;
 
-    @Override
-    protected void compute() {
+    @SneakyThrows
+    protected void merge() {
         if (arr.length < 2) return;
         var n = arr.length / 2;
         var left = Arrays.copyOfRange(arr, 0, n);
         var right = Arrays.copyOfRange(arr, n, arr.length);
-        var leftAction = new MergeSortAction(left);
-        var rightAction = new MergeSortAction(right);
+        var leftFuture = executor.submit(() -> new MergeSortExecutor(left, executor).merge());
+        var rightFuture = executor.submit(() -> new MergeSortExecutor(right, executor).merge());
 
-        if (arr.length > THRESHOLD) {
-            leftAction.fork();
-            rightAction.compute();
-            leftAction.join();
-        } else {
-            leftAction.compute();
-            rightAction.compute();
-        }
+        System.out.println("Waiting for the result of left sorting");
+        leftFuture.get(); // blocks thread
+        System.out.println("Waiting for the result of right sorting");
+        rightFuture.get(); // blocks thread
+
         merge(arr, left, right);
     }
 
