@@ -2,7 +2,6 @@ package com.bobocode;
 
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -47,7 +46,7 @@ public class SortingRunner {
         var taskStat = Stream.generate(arraySupplier)
                 .limit(10)
                 .map(MergeSortTask::new)
-                .mapToLong(forkJoinPool::invoke)
+                .mapToLong(MergeSortTask::invoke) //implicitly run on ForkJoin Common pool don't need to call ForkJoin directly
                 .map(elapsedNanos -> MILLISECONDS.convert(elapsedNanos, NANOSECONDS))
                 .peek(elapsedTime -> System.out.println(elapsedTime + "ms"))
                 .summaryStatistics();
