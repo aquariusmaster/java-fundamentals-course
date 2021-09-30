@@ -19,8 +19,7 @@ public class HM12 {
 
     public static void main(String[] args) {
         var link = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=10&api_key=DEMO_KEY";
-        HttpResponse<String> max =
-                parseImageUrls(get(link).body())
+        parseImageUrls(get(link).body())
                 .parallelStream()
                 .map(HM12::get)
                 .filter(res -> Objects.nonNull(getHeader(res, "Location")))
@@ -28,9 +27,7 @@ public class HM12 {
                 .map(HM12::head)
                 .filter(res -> Objects.nonNull(getHeader(res, "Content-Length")))
                 .max(comparingLong(res -> Long.parseLong(getHeader(res, "Content-Length"))))
-                .orElseThrow();
-        System.out.println(max.uri());
-        System.out.println(Long.parseLong(getHeader(max, "Content-Length")));
+                .ifPresent(res -> System.out.printf("%s - length: %s", res.uri(), getHeader(res, "Content-Length")));
     }
 
     @SneakyThrows
