@@ -5,9 +5,7 @@ import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toMap;
 
@@ -16,27 +14,44 @@ public class CustomJackson {
         var json = "{\n" +
                 "  \"firstName\": \"Andrii\",\n" +
                 "  \"lastName\": \"Shtramak\",\n" +
-                "  \"email\": \"shtramak@gmail.com\"\n" +
+                "  \"email\": \"shtramak@gmail.com\",\n" +
+                "  \"active\": true,\n" +
+                "  \"age\": 19\n" +
                 "}";
-        jsonToObj(json, User.class);
+        User user = jsonToObj(json, User.class);
+        System.out.println(user);
     }
 
     @SneakyThrows
     public static <T> T jsonToObj(String json, Class<T> clazz) {
-        Map<String, List<Field>> fields = Arrays.stream(clazz.getDeclaredFields()).collect(Collectors.groupingBy(Field::getName));
+        Map<String, String> jsonMap = json.lines().collect(
+                toMap(CustomJackson::parseKey, CustomJackson::parseValue, (l, r) -> r)
+        );
+        T instance = clazz.getDeclaredConstructor().newInstance();
+        Arrays.stream(clazz.getDeclaredFields())
+                .forEach(field -> setValueToField(instance, field, jsonMap.get(field.getName())));
 
-        T t = clazz.getDeclaredConstructor().newInstance();
-        Map<String, String> strings = json.lines()
-                .collect(
-                        toMap(
-                                CustomJackson::parseKey,
-                                CustomJackson::parseValue,
-                                (l, r) -> r
-                        )
-                );
+        return instance;
+    }
 
-        System.out.println(strings);
-        return null;
+    @SneakyThrows
+    private static <T> void setValueToField(T instance, Field field, String strValue) {
+
+        field.setAccessible(true);
+        System.out.println("Type: " + field.getType());
+        if (field.getType().equals(String.class)) {
+            field.set(instance, strValue);
+        } else if (field.getType() == boolean.class || field.getType() == Boolean.class) {
+            field.set(instance, Boolean.parseBoolean(strValue));
+        } else if (field.getType() == int.class || field.getType() == Integer.class) {
+            field.set(instance, Integer.parseInt(strValue));
+        } else if (field.getType() == long.class || field.getType() == Long.class) {
+            field.set(instance, Long.parseLong(strValue));
+        } else if (field.getType() == double.class || field.getType() == Double.class) {
+            field.set(instance, Double.parseDouble(strValue));
+        } else {
+            System.out.println("Type is unsupported, ignoring");
+        }
     }
 
     @Data
@@ -44,6 +59,8 @@ public class CustomJackson {
         private String firstName;
         private String lastName;
         private String email;
+        private Integer age;
+        private boolean active;
     }
 
     public static String parseKey(String line) {
@@ -55,9 +72,22 @@ public class CustomJackson {
     }
 
     public static String parseValue(String line) {
-        int start = line.lastIndexOf(": \"");
-        int end = line.lastIndexOf("\"");
-        if (start == -1 || start + 2 > end) return "";
+        int start = line.lastIndexOf(": ");
+        if (start == -1) return "";
+        boolean isStringValue = line.charAt(start + 2) == '"';
+        if (isStringValue) {
+            int end = line.lastIndexOf("\"");
+            if (end == -1) return "";
+            return line.substring(start + 3, end);
+        }
+        int end = -1;
+        if (line.charAt(line.length() - 1) == ',') {
+            end = line.lastIndexOf(",");
+        } else {
+            end = line.length();
+        }
+        if (end == -1 || start + 2 > end) return "";
         return line.substring(start + 2, end);
     }
+
 }

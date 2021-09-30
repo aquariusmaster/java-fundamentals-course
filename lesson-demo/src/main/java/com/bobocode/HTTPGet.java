@@ -49,7 +49,7 @@ public class HTTPGet {
         var request = HttpRequest.newBuilder(new URI(link)).GET().build();
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
-        return extractImageUrls(response.body());
+        return parseImageUrls(response.body());
     }
 
     @SneakyThrows
@@ -57,14 +57,14 @@ public class HTTPGet {
         var connection = new URL(link).openConnection();
         var responseBody = readToString(connection.getInputStream());
 
-        return extractImageUrls(responseBody);
+        return parseImageUrls(responseBody);
     }
 
     @SneakyThrows
     public static List<String> getByCurl(String link) {
         var curlRequestProcess = Runtime.getRuntime().exec("curl " + link);
         var responseBody = readToString(curlRequestProcess.getInputStream());
-        return extractImageUrls(responseBody);
+        return parseImageUrls(responseBody);
     }
 
     @SneakyThrows
@@ -81,7 +81,7 @@ public class HTTPGet {
 
         var body = readToString(socket.getInputStream());
         socket.close();
-        return extractImageUrls(body);
+        return parseImageUrls(body);
     }
 
     @SneakyThrows
@@ -96,7 +96,7 @@ public class HTTPGet {
         }
     }
 
-    private static List<String> extractImageUrls(String responseBody) {
+    public static List<String> parseImageUrls(String responseBody) {
         return Arrays.stream(responseBody.split("img_src\":\""))
                 .map(line -> line.substring(0, line.indexOf("\",")))
                 .filter(line -> line.startsWith("http"))
